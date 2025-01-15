@@ -8,10 +8,19 @@ BASE_DIR: str = os.path.dirname(os.path.abspath(__file__))
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
+
 class FileMetadata:
     """Represents the metadata of a file."""
-    
-    def __init__(self, uuid: str, create_datetime: str, size: int, mimetype: str, name: str, path: str) -> None:
+
+    def __init__(
+        self,
+        uuid: str,
+        create_datetime: str,
+        size: int,
+        mimetype: str,
+        name: str,
+        path: str,
+    ) -> None:
         """
         Initialize file metadata.
 
@@ -22,36 +31,37 @@ class FileMetadata:
         :param name: Name of the file.
         :param path: Path to the file on disk.
         """
-        self.uuid = uuid
-        self.create_datetime = create_datetime
-        self.size = size
-        self.mimetype = mimetype
-        self.name = name
-        self.path = path
+        self.uuid: str = uuid
+        self.create_datetime: str = create_datetime
+        self.size: int = size
+        self.mimetype: str = mimetype
+        self.name: str = name
+        self.path: str = path
 
     def to_dict(self) -> dict:
         """
         Return the metadata of the file as a dictionary.
-        
+
         :return: Dictionary representation of file metadata.
         """
         return {
             "create_datetime": self.create_datetime,
             "size": self.size,
             "mimetype": self.mimetype,
-            "name": self.name
+            "name": self.name,
         }
+
 
 class FileService:
     """Provides services for managing files."""
-    
-    def __init__(self, files_metadata: dict[str, FileMetadata] = None) -> None:
+
+    def __init__(self, files_metadata: dict[str, FileMetadata] | None = None) -> None:
         """
         Initialize the file service with metadata.
 
         :param files_metadata: Dictionary of file metadata.
         """
-        self.files_metadata = files_metadata or {}
+        self.files_metadata: dict[str, FileMetadata] = files_metadata or {}
 
     def add_file_metadata(self, file_metadata: FileMetadata) -> None:
         """
@@ -85,8 +95,9 @@ class FileService:
         :param uuid: UUID of the file.
         :return: True if the file exists, False otherwise.
         """
-        file_data = self.get_file_metadata(uuid)
+        file_data: FileMetadata | None = self.get_file_metadata(uuid)
         return file_data is not None and os.path.exists(file_data.path)
+
 
 class FileAPI:
     """Handles API routes for file operations."""
@@ -99,15 +110,19 @@ class FileAPI:
         :param file_service: FileService instance to manage files.
         """
         self.app = app
-        self.file_service = file_service
+        self.file_service: FileService = file_service
         self.register_routes()
 
     def register_routes(self) -> None:
         """
         Register all API endpoints.
         """
-        self.app.add_url_rule('/file/<uuid>/stat/', view_func=self.file_stat, methods=['GET'])
-        self.app.add_url_rule('/file/<uuid>/read/', view_func=self.read_file, methods=['GET'])
+        self.app.add_url_rule(
+            "/file/<uuid>/stat/", view_func=self.file_stat, methods=["GET"]
+        )
+        self.app.add_url_rule(
+            "/file/<uuid>/read/", view_func=self.read_file, methods=["GET"]
+        )
 
     def file_stat(self, uuid: str):
         """
@@ -116,8 +131,8 @@ class FileAPI:
         :param uuid: UUID of the file.
         :return: JSON response with file metadata or 404 if not found.
         """
-        file_data = self.file_service.get_file_metadata(uuid)
-        
+        file_data: FileMetadata | None = self.file_service.get_file_metadata(uuid)
+
         if file_data:
             return jsonify(file_data.to_dict())
         else:
@@ -131,8 +146,8 @@ class FileAPI:
         :param uuid: UUID of the file.
         :return: File response for download or 404 if not found.
         """
-        file_data = self.file_service.get_file_metadata(uuid)
-        
+        file_data: FileMetadata | None = self.file_service.get_file_metadata(uuid)
+
         if file_data:
             if not os.path.exists(file_data.path):
                 logging.error(f"File with UUID {uuid} not found on disk.")
@@ -157,11 +172,12 @@ class FileAPI:
                 file_data.path,
                 mimetype=file_data.mimetype,
                 as_attachment=True,
-                download_name=file_data.name
+                download_name=file_data.name,
             )
         else:
             logging.error(f"File with UUID {uuid} not found.")
             abort(404, description=f"File with UUID {uuid} not found.")
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -174,7 +190,7 @@ initial_metadata: dict[str, FileMetadata] = {
         size=12345,
         mimetype="text/plain",
         name="example.txt",
-        path=os.path.join(BASE_DIR, "example.txt")
+        path=os.path.join(BASE_DIR, "example.txt"),
     )
 }
 
